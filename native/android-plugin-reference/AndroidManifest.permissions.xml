@@ -1,0 +1,32 @@
+<!--
+  Merge these into android/app/src/main/AndroidManifest.xml once generated.
+  ADR-012 #1: minSdk 26, targetSdk 34.
+-->
+
+<!-- Full storage strategy (API 30+; ignored below that, legacy permission used instead) -->
+<uses-permission
+    android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+    tools:ignore="ScopedStorage" />
+
+<!-- Legacy fallback for minSdk 26-29, superseded by MANAGE_EXTERNAL_STORAGE on 30+ -->
+<uses-permission
+    android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="29" />
+<uses-permission
+    android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="29" />
+
+<!-- Granular media permissions, API 33+ -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+<uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
+<!-- Partial media access via Photo Picker, API 34+ -->
+<uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+
+<!--
+  Note: requesting MANAGE_EXTERNAL_STORAGE alongside granular media
+  permissions is intentional (ADR-012 #1) — the app supports both the
+  full-storage strategy and narrower strategies, and checks actual
+  granted state at runtime rather than assuming one from install.
+-->

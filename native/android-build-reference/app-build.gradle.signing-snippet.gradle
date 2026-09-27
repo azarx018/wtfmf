@@ -1,0 +1,39 @@
+// ADR-012 §4 — merge this into android/app/build.gradle's `android { ... }`
+// block once `npx cap add android` has been run. Reads signing material
+// from environment variables set by .github/workflows/android-build.yml —
+// never hardcode a password, alias, or keystore path here.
+
+def releaseKeystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+def releaseKeystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+
+android {
+    // ... existing compileSdkVersion / defaultConfig / etc. stay as-is ...
+
+    signingConfigs {
+        release {
+            if (releaseKeystorePath) {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseKeystorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+            // If the env vars are absent (e.g. running `./gradlew
+            // assembleRelease` locally without CI secrets), this
+            // signingConfig resolves to unsigned. Do NOT fall back to
+            // the debug keystore for a release build type.
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Uses Gradle's auto-generated debug signing config —
+            // no changes needed here.
+        }
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false // revisit once ProGuard/R8 rules exist
+        }
+    }
+}

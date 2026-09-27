@@ -1,0 +1,12 @@
+node_modules/
+build/
+.svelte-kit/
+android/app/build/
+android/.gradle/
+android/local.properties
+*.log
+.DS_Store
+
+# ADR-012 #4 — signing material must never be committed
+*.jks
+*.keystore

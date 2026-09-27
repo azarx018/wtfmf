@@ -1,0 +1,135 @@
+name: Android Build
+
+# ADR-012 §4 — debug builds run on every push/PR with no secrets needed.
+# Release builds (signed) only run on a version tag or manual dispatch,
+# and require the four secrets documented in docs/ci/android-signing-setup.md.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build-debug:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify android/ exists
+        run: |
+          if [ ! -d "android" ]; then
+            echo "::error::android/ not found. Run 'npx cap add android', commit it, then re-run this workflow. See README.md."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets + sync Capacitor
+        run: npm run android:build
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK platforms & build-tools
+        run: |
+          # ADR-012 "Compile SDK Fallback" — install both 35 (preferred)
+          # and 34 (fallback) so the build succeeds regardless of which
+          # android/variables.gradle ends up declaring.
+          sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-35" "platforms;android-34" \
+                     "build-tools;35.0.0" "build-tools;34.0.0"
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtfmf-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  build-release:
+    name: Build & sign release APK
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    needs: build-debug
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets + sync Capacitor
+        run: npm run android:build
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK platforms & build-tools
+        run: |
+          sdkmanager --licenses >/dev/null
+          sdkmanager "platforms;android-35" "platforms;android-34" \
+                     "build-tools;35.0.0" "build-tools;34.0.0"
+
+      # ADR-012 §4 — keystore is never committed. Decoded from a secret
+      # into a runner-local temp file that exists only for this job.
+      - name: Decode release keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 secret is not set. See docs/ci/android-signing-setup.md."
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "${{ runner.temp }}/release.keystore"
+
+      - name: Assemble & sign release APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Upload signed release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wtfmf-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error

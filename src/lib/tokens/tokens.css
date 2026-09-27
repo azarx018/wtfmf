@@ -1,0 +1,83 @@
+/*
+  WTFMF Design Tokens
+  Source: WTFMF_UI_UX_RULES.md §3–§7, WTFMF_ENGINEERING_SPEC.md §39
+
+  These are the ONLY place colors, spacing, radius, and type scale
+  should be defined. No arbitrary per-component values.
+*/
+:root {
+  /* Color — dark navy/blue-black base, not pure black */
+  --color-background: #050A14;
+  --color-surface: #0B1626;
+  --color-surface-elevated: #101E31;
+  --color-border: #1B2C44;
+
+  --color-accent-primary: #5B7CFA;   /* electric blue → violet range */
+  --color-accent-secondary: #22D3EE; /* cyan */
+
+  --color-positive: #34D399;
+  --color-warning: #F59E0B;
+  --color-danger: #F87171;
+
+  --color-text: #E7ECF7;
+  --color-text-muted: #7C8AA6;       /* blue-gray */
+
+  /* Spacing — 4/8-based scale */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+
+  /* Corner radius */
+  --radius-card-lg: 24px;
+  --radius-card-md: 18px;
+  --radius-button: 16px;
+  --radius-chip: 999px;
+  --radius-input: 16px;
+
+  /* Typography scale */
+  --font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-size-display: 36px;
+  --font-size-title: 26px;
+  --font-size-section: 19px;
+  --font-size-body: 15px;
+  --font-size-secondary: 13px;
+  --font-size-micro: 11px;
+
+  /* Touch targets */
+  --touch-min: 44px;
+  --button-height: 52px;
+
+  /* Motion (WTFMF_UI_UX_RULES.md §28) */
+  --motion-micro: 150ms;
+  --motion-normal: 220ms;
+  --motion-reveal: 340ms;
+}
+
+/* The app is dark-first by design (see UI/UX rules §3). Token block
+   kept isolated here in case a light theme is ever explicitly scoped. */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-body);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
