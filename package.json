@@ -16,6 +16,7 @@
     "android:build": "npm run build && npm run cap:sync"
   },
   "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
     "@sveltejs/adapter-static": "^3.0.0",
     "@sveltejs/kit": "^2.5.0",
     "@sveltejs/vite-plugin-svelte": "^3.1.0",
