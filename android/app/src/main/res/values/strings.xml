@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WTFMF</string>
+    <string name="title_activity_main">WTFMF</string>
+    <string name="package_name">com.wtfmf.app</string>
+    <string name="custom_url_scheme">com.wtfmf.app</string>
+</resources>
