@@ -1,11 +1,26 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   import { initAppLifecycle } from '$lib/bootstrap';
+  import { permissionStore } from '$lib/stores/permissionStore';
 
   onMount(() => {
     initAppLifecycle();
   });
+
+  // Route guard: until storage access is usable, every screen redirects
+  // to onboarding — there's nothing else the app can meaningfully show.
+  // Waits for lastCheckedAt > 0 so it doesn't redirect on the UNKNOWN
+  // state before the initial check (from bootstrap.ts) resolves.
+  $: if (
+    $permissionStore.lastCheckedAt > 0 &&
+    $permissionStore.state !== 'FULL' &&
+    $permissionStore.state !== 'PARTIAL' &&
+    !$page.url.pathname.startsWith('/onboarding')
+  ) {
+    goto('/onboarding/');
+  }
 
   // Bottom nav per WTFMF_UI_UX_RULES.md §27 — 4 destinations, icon + label,
   // never icon-only for primary destinations.
