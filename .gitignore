@@ -10,3 +10,4 @@ android/local.properties
 # ADR-012 #4 — signing material must never be committed
 *.jks
 *.keystore
+.vibesync/
