@@ -21,8 +21,11 @@ PKG_PATH="android/app/src/main/java/com/wtfmf/app"
 if [ -d "android" ]; then
   echo "android/ already exists — skipping 'cap add android'. Delete it first for a clean regenerate."
 else
-  echo "==> npm ci"
-  npm ci
+  echo "==> npm install"
+  # No package-lock.json exists yet in this repo (never `npm install`-ed
+  # anywhere with network access before now) — `npm install` generates it.
+  # Future runs (once the lock file is committed) can go back to `npm ci`.
+  npm install
 
   echo "==> Building web assets (required before cap add)"
   npm run build
