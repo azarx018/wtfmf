@@ -48,12 +48,22 @@ jobs:
 
       - name: Locate sdkmanager (runner ships a pre-installed Android SDK)
         run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           if command -v sdkmanager >/dev/null 2>&1; then
-            echo "SDKMANAGER=sdkmanager" >> "$GITHUB_ENV"
+            SDKMANAGER_PATH="$(command -v sdkmanager)"
           else
-            SDKMANAGER_PATH=$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 2 -name sdkmanager | sort -r | head -n1)
-            echo "SDKMANAGER=$SDKMANAGER_PATH" >> "$GITHUB_ENV"
+            # No -maxdepth here: cmdline-tools/<version>/bin/sdkmanager is 3
+            # levels deep, and a too-shallow -maxdepth silently finds
+            # nothing instead of erroring, which is exactly what happened
+            # the first time this was written (maxdepth 2, one level short).
+            SDKMANAGER_PATH=$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -r | head -n1)
           fi
+          if [ -z "$SDKMANAGER_PATH" ]; then
+            echo "::error::Could not locate sdkmanager under $SDK_ROOT/cmdline-tools. The runner image may not ship a pre-installed Android SDK."
+            exit 1
+          fi
+          echo "Using sdkmanager at: $SDKMANAGER_PATH"
+          echo "SDKMANAGER=$SDKMANAGER_PATH" >> "$GITHUB_ENV"
 
       - name: Accept licenses & install SDK platforms/build-tools
         run: |
@@ -112,12 +122,22 @@ jobs:
 
       - name: Locate sdkmanager (runner ships a pre-installed Android SDK)
         run: |
+          SDK_ROOT="${ANDROID_HOME:-$ANDROID_SDK_ROOT}"
           if command -v sdkmanager >/dev/null 2>&1; then
-            echo "SDKMANAGER=sdkmanager" >> "$GITHUB_ENV"
+            SDKMANAGER_PATH="$(command -v sdkmanager)"
           else
-            SDKMANAGER_PATH=$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 2 -name sdkmanager | sort -r | head -n1)
-            echo "SDKMANAGER=$SDKMANAGER_PATH" >> "$GITHUB_ENV"
+            # No -maxdepth here: cmdline-tools/<version>/bin/sdkmanager is 3
+            # levels deep, and a too-shallow -maxdepth silently finds
+            # nothing instead of erroring, which is exactly what happened
+            # the first time this was written (maxdepth 2, one level short).
+            SDKMANAGER_PATH=$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | sort -r | head -n1)
           fi
+          if [ -z "$SDKMANAGER_PATH" ]; then
+            echo "::error::Could not locate sdkmanager under $SDK_ROOT/cmdline-tools. The runner image may not ship a pre-installed Android SDK."
+            exit 1
+          fi
+          echo "Using sdkmanager at: $SDKMANAGER_PATH"
+          echo "SDKMANAGER=$SDKMANAGER_PATH" >> "$GITHUB_ENV"
 
       - name: Accept licenses & install SDK platforms/build-tools
         run: |
