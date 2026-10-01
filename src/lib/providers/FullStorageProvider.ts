@@ -20,7 +20,7 @@ export class FullStorageProvider implements StorageProvider {
   };
 
   async list(_directoryUri: string): Promise<DirectoryEntry[]> {
-    throw new Error('Not implemented — bridge to native Kotlin file listing');
+    throw new Error('Not implemented — bridge to native Java file listing');
   }
 
   async stat(_uri: string): Promise<FileStat | null> {

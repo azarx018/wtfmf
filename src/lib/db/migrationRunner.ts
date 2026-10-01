@@ -7,6 +7,8 @@
 //   previous database, log the error, surface a human-readable recovery message.
 // - Support upgrading across multiple versions in one run (v1 -> v2 -> v3 -> v4).
 
+import migration001Sql from './migrations/001_initial.sql?raw';
+
 export interface Migration {
   version: number;
   description: string;
@@ -34,10 +36,8 @@ export class MigrationError extends Error {
   }
 }
 
-// Registry — import migration SQL files here as they're added.
-// e.g. import m001 from './migrations/001_initial.sql?raw';
 export const MIGRATIONS: Migration[] = [
-  // { version: 1, description: 'initial schema', sql: m001 },
+  { version: 1, description: 'initial schema', sql: migration001Sql }
 ];
 
 export const DATABASE_VERSION = MIGRATIONS.length > 0

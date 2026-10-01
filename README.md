@@ -16,7 +16,9 @@ service, repository, and provider is an interface or a stub that throws
 
 - Folder structure matching the layered architecture in spec §3
 - All 18 required screens (spec §41) exist as routes with placeholder content
-- SQLite schema (`src/lib/db/schema.sql`) + migration runner skeleton
+- SQLite wired to `@capacitor-community/sqlite`, migrations running for real
+  (`SettingsRepository` is the first concrete implementation on top of it —
+  see below for what's still a stub)
 - Domain types matching the schema exactly
 - Design tokens (`src/lib/tokens/tokens.css`) from the UI/UX rules palette
 - 8 Svelte stores wired to the state-ownership table in spec §4.1
@@ -87,10 +89,13 @@ handles regular debug/release builds.
 2. Read `docs/adr/ADR-012-open-decisions.md` — all six decisions are now
    RESOLVED (SDK versions, partial-hash algorithm, rule tie-breaking,
    APK signing, dark-only v1, per-file duplicate capability checks).
-   These are locked; implement `src/lib/providers/*`, `src/lib/db/client.ts`,
-   and the native Android project against them as-is.
-3. Wire `src/lib/db/client.ts` to `@capacitor-community/sqlite` — every
-   repository implementation depends on it.
+   These are locked; implement `src/lib/providers/*` (still stubs — `FullStorageProvider`/`SafStorageProvider`
+   need a real native file-listing bridge) against them as-is.
+3. `src/lib/db/client.ts` is wired to `@capacitor-community/sqlite` and
+   compiles against the documented API, but **hasn't been exercised on a
+   real device yet** — `SettingsRepository` is the only repository built
+   on top of it so far (used by the permission flow). The other 6
+   repositories in `src/lib/repositories/` are still interfaces only.
 
 ## Non-goals (spec §37)
 

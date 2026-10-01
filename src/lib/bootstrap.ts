@@ -1,27 +1,9 @@
 import { App } from '@capacitor/app';
 import { PermissionServiceImpl } from '$lib/services/impl/PermissionServiceImpl';
+import { SettingsRepositoryImpl } from '$lib/repositories/impl/SettingsRepositoryImpl';
 import { checkPermissionOnLoad, recheckPermissionOnResume } from '$lib/usecases/permissionFlow';
-import type { SettingsRepository } from '$lib/repositories/SettingsRepository';
 
-// TODO: replace with the real SQLite-backed implementation once
-// src/lib/db/client.ts is wired up (see README "Before writing real
-// service implementations").
-const inMemorySettingsRepository: SettingsRepository = (() => {
-  const values: Record<string, string> = {};
-  return {
-    async get(key) {
-      return values[key] ?? null;
-    },
-    async set(key, value) {
-      values[key] = value;
-    },
-    async getAll() {
-      return { ...values };
-    }
-  };
-})();
-
-export const permissionService = new PermissionServiceImpl(inMemorySettingsRepository);
+export const permissionService = new PermissionServiceImpl(new SettingsRepositoryImpl());
 
 let listenerRegistered = false;
 
