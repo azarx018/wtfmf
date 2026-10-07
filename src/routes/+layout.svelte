@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '$lib/tokens/tokens.css';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';

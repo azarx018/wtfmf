@@ -1,6 +1,6 @@
 {
   "name": "wtfmf",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "private": true,
   "description": "Where The Fuck Is My File? — local-first Android file intelligence & organization app",
   "type": "module",
