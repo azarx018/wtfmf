@@ -1,56 +1,66 @@
-# Native Android Plugin Reference — NOT YET INTEGRATED
+# Native Android Plugin Reference
 
-**Status: source written, not built, not tested.**
-
-This sandbox has no network access and no Android SDK, so `npx cap add
-android` could not be run here, and none of the Kotlin below has been
-compiled. These files exist so the permission flow's native half is
-fully specified and ready to drop in — the actual integration and build
-must happen in your own environment or the GitHub Actions workflow.
+**Status: verified against a real generated `android/` project (Capacitor
+6.x). Copied here from the actual working files after the bootstrap
+workflow ran — not hand-guessed.**
 
 ## What's here
 
-- `WtfmfPermissionPlugin.kt` — the Capacitor plugin implementing
+- `WtfmfPermissionPlugin.java` — the Capacitor plugin implementing
   `checkState` / `requestFullAccess` / `requestSafFolder`, matching
   `src/lib/native/permissionPlugin.ts` method-for-method. Implements the
   precedence rule from ADR-012 #1 (FULL > PARTIAL_SAF > PARTIAL_MEDIA_SELECTED > NONE).
-- `MainActivity.kt` — shows where `registerPlugin(WtfmfPermissionPlugin::class.java)` goes.
-- `AndroidManifest.permissions.xml` — the exact `<uses-permission>` block
-  for minSdk 26 / targetSdk 34 (ADR-012 #1), including the legacy
-  `maxSdkVersion="29"` fallback and the API 34 partial-media permission.
+  **Written in Java, not Kotlin** — this Capacitor template has no Kotlin
+  Gradle plugin configured (confirmed: no `kotlin-android` anywhere in
+  `android/build.gradle` or `android/app/build.gradle`), so a `.kt` file
+  dropped into `src/main/java` would silently never be compiled.
+- `MainActivity.java` — the actual `MainActivity.java` Capacitor generates
+  (as **Java**, not Kotlin — the earlier version of this file assumed
+  Kotlin and was wrong), with `registerPlugin(WtfmfPermissionPlugin.class)`
+  added in an overridden `onCreate`.
+- `AndroidManifest.permissions.xml` — the `<uses-permission>` block for
+  minSdk 26 / targetSdk 34 (ADR-012 #1).
 
-## Integration steps (once `npx cap add android` has been run)
+## Known-fixed issues from the first real bootstrap run
 
-1. Copy `WtfmfPermissionPlugin.kt` to
-   `android/app/src/main/java/com/wtfmf/app/WtfmfPermissionPlugin.kt`.
-2. Merge `MainActivity.kt`'s `registerPlugin(...)` call into the
-   generated `android/app/src/main/java/com/wtfmf/app/MainActivity.kt`
-   (Capacitor generates its own `MainActivity.kt` — don't just overwrite it,
-   merge the one line + import).
-3. Merge the `<uses-permission>` entries from
-   `AndroidManifest.permissions.xml` into
-   `android/app/src/main/AndroidManifest.xml`, inside the `<manifest>` tag
-   and above `<application>`. Add `xmlns:tools="http://schemas.android.com/tools"`
-   to the `<manifest>` tag if not already present (needed for the
-   `tools:ignore="ScopedStorage"` attribute).
-4. Set `minSdkVersion 26`, `targetSdkVersion 34`, `compileSdkVersion 35`
-   (or `34` on fallback — see ADR-012 "Compile SDK Fallback") in
-   `android/variables.gradle`.
-5. Run `npm run cap:sync` to pull `@capacitor/app` and
-   `@capacitor-community/sqlite` native dependencies in.
-6. Build via Android Studio or the GitHub Actions workflow (not yet
-   written — see ADR-012 §4 signing decision) and test on the actual
-   device (Redmi 10, Android 14) before trusting the permission
-   precedence logic — OEM (MIUI/HyperOS) storage-permission screens are
-   known to deviate from stock AOSP behavior in exactly the area this
-   plugin touches.
+1. **Capacitor generates `MainActivity.java`, not `.kt`.** The bootstrap
+   script originally looked for a `.kt` file that never existed, so the
+   plugin registration step silently no-opped. Fixed in
+   `scripts/bootstrap-android.sh` and in this reference set.
+2. **The manifest-merge `awk` command had an unguarded pattern.** The
+   command used to strip the reference file's leading explanatory
+   comment matched `-->` on *every* line, not just the first — which ate
+   the closing `-->` of the trailing note comment near the bottom of
+   `AndroidManifest.permissions.xml` too, corrupting the merged manifest
+   (the `<application>` block ended up swallowed inside an unterminated
+   XML comment). Fixed with a `!found` guard in
+   `scripts/bootstrap-android.sh`.
+3. `signingConfigs`/`buildTypes.release.signingConfig` merge into
+   `android/app/build.gradle` is still a manual step — see
+   `native/android-build-reference/app-build.gradle.signing-snippet.gradle`,
+   now written to match the *actual* generated file's structure exactly
+   (confirmed against a real bootstrap run) rather than a guess.
 
-## What is NOT done here
+## Integration steps (for a from-scratch regenerate)
 
-- No error handling for the case where `startActivityForResult` itself
-  throws on an OEM ROM that blocks the settings intent entirely.
-- No handling for a user who grants SAF access to a *sub*-folder of one
-  already granted (URI permission de-duplication) — out of scope for
-  this vertical slice.
-- No native tests. Kotlin unit tests for this plugin are a good next
-  step once `android/` exists and can host `androidTest`/`test` source sets.
+1. Delete `android/`, then run `scripts/bootstrap-android.sh` again (or
+   the "Bootstrap Android Platform" GitHub Actions workflow).
+2. The script copies `WtfmfPermissionPlugin.java` in and rewrites
+   `MainActivity.java` automatically.
+3. **Diff the merged `AndroidManifest.xml` before committing** — confirm
+   it still ends with `</manifest>` and every comment is properly closed.
+4. Merge the signing snippet into `android/app/build.gradle` by hand.
+5. Build via the `android-build.yml` workflow, or Android Studio, and
+   test on the actual device (Redmi 10, Android 14) before trusting the
+   permission precedence logic — OEM (MIUI/HyperOS) storage-permission
+   screens are known to deviate from stock AOSP behavior in exactly the
+   area this plugin touches.
+
+## What is still NOT done
+
+- No error handling for `startActivityForResult` itself throwing on an
+  OEM ROM that blocks the settings intent entirely.
+- No handling for a user granting SAF access to a *sub*-folder of one
+  already granted (URI permission de-duplication).
+- No native tests yet (`android/app/src/test`, `androidTest` exist as
+  empty directories from the Capacitor template).

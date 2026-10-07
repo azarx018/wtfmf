@@ -1,9 +1,15 @@
 import { App } from '@capacitor/app';
 import { PermissionServiceImpl } from '$lib/services/impl/PermissionServiceImpl';
 import { SettingsRepositoryImpl } from '$lib/repositories/impl/SettingsRepositoryImpl';
+import { FileRepositoryImpl } from '$lib/repositories/impl/FileRepositoryImpl';
+import { ScanRepositoryImpl } from '$lib/repositories/impl/ScanRepositoryImpl';
+import { ScannerServiceImpl } from '$lib/services/impl/ScannerServiceImpl';
 import { checkPermissionOnLoad, recheckPermissionOnResume } from '$lib/usecases/permissionFlow';
 
 export const permissionService = new PermissionServiceImpl(new SettingsRepositoryImpl());
+export const fileRepository = new FileRepositoryImpl();
+export const scanRepository = new ScanRepositoryImpl();
+export const scannerService = new ScannerServiceImpl(fileRepository, scanRepository);
 
 let listenerRegistered = false;
 

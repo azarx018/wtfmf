@@ -11,4 +11,5 @@ export interface FileRepository {
   upsertMany(files: FileRecord[]): Promise<void>;
   deleteById(id: number): Promise<void>;
   markMissing(id: number): Promise<void>; // file no longer exists on disk (spec §17)
+  getAggregateStats(): Promise<{ totalSize: number; totalCount: number }>;
 }
